@@ -1,0 +1,30 @@
+.DS_Store
+.idea/
+.vscode/
+
+# Java
+target/
+*.class
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+
+# Local config and data
+.env
+.env.*
+!.env.example
+data/
+tmp/
+
+# Logs
+*.log
