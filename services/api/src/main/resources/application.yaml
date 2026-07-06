@@ -1,6 +1,12 @@
 spring:
   application:
     name: agentctl-api
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:agentctl}}
+    username: ${POSTGRES_USER:agentctl}
+    password: ${POSTGRES_PASSWORD:agentctl}
+  flyway:
+    enabled: true
 
 management:
   endpoints:
