@@ -38,10 +38,10 @@ const servicesRequiringHealthchecks = [
   "otel-collector",
 ];
 
-const missingHealthchecks = servicesRequiringHealthchecks.filter((service) => {
+function serviceBlockFor(service) {
   const serviceStart = compose.indexOf(`  ${service}:`);
   if (serviceStart < 0) {
-    return true;
+    return "";
   }
 
   const nextServiceMatch = compose
@@ -51,16 +51,24 @@ const missingHealthchecks = servicesRequiringHealthchecks.filter((service) => {
     nextServiceMatch === null
       ? -1
       : serviceStart + service.length + 4 + nextServiceMatch.index;
-  const serviceBlock = compose.slice(
+  return compose.slice(
     serviceStart,
     nextService === -1 ? compose.length : nextService,
   );
-  return !serviceBlock.includes("\n    healthcheck:");
+}
+
+const missingHealthchecks = servicesRequiringHealthchecks.filter((service) => {
+  return !serviceBlockFor(service).includes("\n    healthcheck:");
 });
 
 if (missingHealthchecks.length > 0) {
   console.error(
     `Compose contract missing healthchecks: ${missingHealthchecks.join(", ")}`,
   );
+  process.exit(1);
+}
+
+if (!serviceBlockFor("temporal").includes("DB: postgres12")) {
+  console.error("Temporal compose contract must use DB: postgres12");
   process.exit(1);
 }
