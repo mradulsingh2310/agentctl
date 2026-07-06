@@ -8,8 +8,13 @@ visibility, model/cost telemetry, and eval gates.
 
 ## Current Status
 
-This repository currently contains product requirements documents and the initial
-OSS project shell. Implementation has not started yet.
+This repository contains the M1 platform skeleton:
+
+- Java/Spring API shell with `/api/health`
+- Python `uv` agent-worker shell
+- Next.js dashboard shell
+- Docker Compose wiring for API, worker, web, Temporal, Postgres, MinIO, Ollama,
+  OTel Collector, Prometheus, Tempo, and Grafana
 
 ## PRDs
 
@@ -18,9 +23,9 @@ OSS project shell. Implementation has not started yet.
 - [Incident Agent PRD](docs/prd/agents/incident-agent.md)
 - [GitHub Ops Ticket-to-PR Agent PRD](docs/prd/agents/github-ops-ticket-to-pr-agent.md)
 
-## Planned Local Demo
+## Local Demo
 
-The target first-run experience is:
+Copy `.env.example` if you want to override local defaults, then run:
 
 ```bash
 docker compose up
@@ -29,6 +34,19 @@ docker compose up
 The stack will start the Java/Spring control plane, Temporal, Postgres, MinIO,
 Next.js dashboard, Python LangGraph agent worker, local Ollama model profile,
 and OTel/Grafana observability services.
+
+The Ollama service is included, but no Gemma model tag is hardcoded yet. The
+exact official tag must be verified before making it a default.
+
+## Development Checks
+
+```bash
+cd services/api && mvn test
+cd services/agent-worker && uv run python -m unittest discover -s tests
+cd services/web && npm run test:contract && npm run build
+node scripts/check-compose-contract.mjs
+docker compose config
+```
 
 ## License
 
