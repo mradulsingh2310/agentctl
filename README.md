@@ -8,12 +8,12 @@ visibility, model/cost telemetry, and eval gates.
 
 ## Current Status
 
-This repository contains the M1-M3 platform foundation:
+This repository contains the M1-M4 platform foundation:
 
 - Java/Spring API with `/api/health`, run projections, approval projections,
   audit timeline APIs, Flyway migrations, and Postgres wiring
 - Temporal Java run workflow with approval signals and projection activities
-- Python `uv` agent-worker shell
+- Python `uv` FastAPI agent worker with LangGraph/LangChain support-ticket draft step
 - Next.js dashboard shell
 - Docker Compose wiring with healthchecks for API, worker, web, Temporal,
   Postgres, and MinIO by default, plus opt-in agent and observability profiles
@@ -47,14 +47,15 @@ docker compose --profile observability up --build
 docker compose --profile agents --profile observability up --build
 ```
 
-The `agents` profile starts the Python LangGraph agent-worker shell and Ollama.
+The `agents` profile starts the Python LangGraph agent worker and Ollama.
 No Gemma model tag is hardcoded yet; the exact official tag must be verified
 before making it a default. The `observability` profile starts OTel Collector,
 Prometheus, Tempo, and Grafana.
 
-Basic API smoke checks:
+Basic API smoke checks for the durable support-ticket draft flow:
 
 ```bash
+docker compose --profile agents up --build
 curl -fsS http://localhost:8080/api/health
 curl -fsS -X POST http://localhost:8080/api/runs \
   -H 'Content-Type: application/json' \
@@ -63,9 +64,11 @@ curl -fsS http://localhost:8080/api/runs
 curl -fsS http://localhost:8080/api/approvals/pending
 ```
 
-Run creation starts a Temporal workflow. The workflow writes projection updates,
-creates a pending approval, waits for an approval signal, and then marks the run
-`COMPLETED` or `REJECTED`.
+Run creation starts a Temporal workflow. The Java worker calls the Python
+`POST /v1/agent-steps` runtime, stores the agent step/model/tool projections,
+creates a pending approval from the support-ticket draft response, waits for an
+approval signal, and then marks the run `COMPLETED` or `REJECTED`. No fake
+ticket or GitHub mutation happens in M4.
 
 ## Development Checks
 

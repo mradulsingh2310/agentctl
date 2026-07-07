@@ -279,6 +279,7 @@ Add `tool_calls` as a projection table now, even if M4 stores no mutation calls:
 - `backend`
 - `external_url`
 - `fga_decision_id`
+- `metadata_json`
 - `created_at`
 - `updated_at`
 
@@ -286,7 +287,8 @@ Add `tool_calls` as a projection table now, even if M4 stores no mutation calls:
 
 - Java activity timeouts fail the run with `FAILED`.
 - Python validation errors return HTTP 400 and Java records `FAILED`.
-- Python 5xx errors are retryable by Temporal activity retry policy.
+- Python 5xx errors are retryable by Temporal activity retry policy, capped at
+  three attempts in M4.
 - Unsupported agent errors are non-retryable workflow failures mapped to `FAILED`.
 - Tenant/run ID mismatch between headers and body returns HTTP 400.
 
