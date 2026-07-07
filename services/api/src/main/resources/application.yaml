@@ -22,3 +22,7 @@ agentctl:
     task-queue: ${AGENTCTL_TEMPORAL_TASK_QUEUE:agentctl-runs}
   worker:
     enabled: ${AGENTCTL_WORKER_ENABLED:false}
+  agent-worker:
+    base-url: ${AGENTCTL_AGENT_WORKER_BASE_URL:http://agentctl-agent-worker:8090}
+    protocol-version: ${AGENTCTL_AGENT_STEP_PROTOCOL_VERSION:2026-07-07}
+    step-timeout: ${AGENTCTL_AGENT_STEP_TIMEOUT:30s}

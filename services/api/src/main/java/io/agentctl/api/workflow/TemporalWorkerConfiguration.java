@@ -19,8 +19,9 @@ class TemporalWorkerConfiguration {
     TemporalWorkerLifecycle temporalWorkerLifecycle(
             WorkflowClient workflowClient,
             JdbcRunProjectionActivities activities,
+            AgentStepActivities agentStepActivities,
             @Value("${agentctl.temporal.task-queue}") String taskQueue) {
-        return new TemporalWorkerLifecycle(workflowClient, activities, taskQueue);
+        return new TemporalWorkerLifecycle(workflowClient, activities, agentStepActivities, taskQueue);
     }
 
     static class TemporalWorkerLifecycle implements SmartLifecycle {
@@ -30,11 +31,12 @@ class TemporalWorkerConfiguration {
         TemporalWorkerLifecycle(
                 WorkflowClient workflowClient,
                 JdbcRunProjectionActivities activities,
+                AgentStepActivities agentStepActivities,
                 String taskQueue) {
             workerFactory = WorkerFactory.newInstance(workflowClient);
             Worker worker = workerFactory.newWorker(taskQueue);
             worker.registerWorkflowImplementationTypes(RunWorkflowImpl.class);
-            worker.registerActivitiesImplementations(activities);
+            worker.registerActivitiesImplementations(activities, agentStepActivities);
         }
 
         @Override
