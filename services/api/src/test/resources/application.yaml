@@ -4,3 +4,12 @@ spring:
     username: sa
     password:
     driver-class-name: org.h2.Driver
+
+agentctl:
+  temporal:
+    enabled: false
+    address: localhost:7233
+    namespace: default
+    task-queue: agentctl-runs
+  worker:
+    enabled: false

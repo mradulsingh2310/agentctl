@@ -19,6 +19,7 @@
 
     <properties>
         <java.version>21</java.version>
+        <temporal.version>1.36.1</temporal.version>
     </properties>
 
     <dependencies>
@@ -37,6 +38,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.temporal</groupId>
+            <artifactId>temporal-sdk</artifactId>
+            <version>${temporal.version}</version>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
@@ -72,6 +78,12 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.temporal</groupId>
+            <artifactId>temporal-testing</artifactId>
+            <version>${temporal.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

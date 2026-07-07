@@ -13,3 +13,12 @@ management:
     web:
       exposure:
         include: health,prometheus
+
+agentctl:
+  temporal:
+    enabled: ${AGENTCTL_TEMPORAL_ENABLED:true}
+    address: ${TEMPORAL_ADDRESS:localhost:7233}
+    namespace: ${TEMPORAL_NAMESPACE:default}
+    task-queue: ${AGENTCTL_TEMPORAL_TASK_QUEUE:agentctl-runs}
+  worker:
+    enabled: ${AGENTCTL_WORKER_ENABLED:false}

@@ -8,6 +8,8 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       POSTGRES_HOST: postgres
       TEMPORAL_ADDRESS: temporal:7233
+      AGENTCTL_TEMPORAL_ENABLED: "true"
+      AGENTCTL_WORKER_ENABLED: "false"
       MINIO_ENDPOINT: http://minio:9000
       FGA_GATEWAY_BASE_URL: ${FGA_GATEWAY_BASE_URL:-http://host.docker.internal:8089}
     depends_on:
@@ -34,6 +36,8 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       POSTGRES_HOST: postgres
       TEMPORAL_ADDRESS: temporal:7233
+      AGENTCTL_TEMPORAL_ENABLED: "true"
+      AGENTCTL_WORKER_ENABLED: "true"
       MINIO_ENDPOINT: http://minio:9000
     depends_on:
       - postgres

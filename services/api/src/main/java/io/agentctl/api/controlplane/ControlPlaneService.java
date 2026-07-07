@@ -14,6 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import io.agentctl.api.workflow.ApprovalSignal;
+import io.agentctl.api.workflow.RunWorkflowGateway;
+import io.agentctl.api.workflow.RunWorkflowInput;
+
 @Service
 public class ControlPlaneService {
     private static final String RUN_CREATED = "RUN_CREATED";
@@ -21,9 +25,11 @@ public class ControlPlaneService {
     private static final String APPROVAL_REJECTED = "APPROVAL_REJECTED";
 
     private final JdbcClient jdbc;
+    private final RunWorkflowGateway runWorkflowGateway;
 
-    public ControlPlaneService(JdbcClient jdbc) {
+    public ControlPlaneService(JdbcClient jdbc, RunWorkflowGateway runWorkflowGateway) {
         this.jdbc = jdbc;
+        this.runWorkflowGateway = runWorkflowGateway;
     }
 
     @Transactional
@@ -46,6 +52,7 @@ public class ControlPlaneService {
                 .update();
 
         insertAuditEvent(tenantId, runId, RUN_CREATED, "Run created", now);
+        runWorkflowGateway.startRun(new RunWorkflowInput(tenantId, runId, request.agentId(), request.input()));
         return getRun(tenantId, runId);
     }
 
@@ -139,6 +146,12 @@ public class ControlPlaneService {
                 .update();
 
         insertAuditEvent(tenantId, approval.runId(), auditEventType, "Approval " + nextStatus.toLowerCase(), now);
+        runWorkflowGateway.signalApproval(approval.runId(), new ApprovalSignal(
+                approval.runId(),
+                approvalId,
+                nextStatus,
+                request.actorId(),
+                request.reason()));
         return findApproval(tenantId, approvalId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Approval not found"));
     }

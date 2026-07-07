@@ -2,6 +2,7 @@ package io.agentctl.api.controlplane;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.startsWith;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -9,18 +10,27 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.agentctl.api.workflow.ApprovalSignal;
+import io.agentctl.api.workflow.RunWorkflowGateway;
+import io.agentctl.api.workflow.RunWorkflowInput;
 
 @SpringBootTest(properties = {
         "spring.datasource.url=jdbc:h2:mem:agentctl-control-plane;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH",
@@ -39,6 +49,9 @@ class ControlPlaneApiTest {
     @Autowired
     private JdbcClient jdbc;
 
+    @Autowired
+    private RecordingRunWorkflowGateway runWorkflowGateway;
+
     @BeforeEach
     void cleanDatabase() {
         jdbc.sql("delete from audit_events").update();
@@ -46,6 +59,7 @@ class ControlPlaneApiTest {
         jdbc.sql("delete from runs").update();
         jdbc.sql("delete from users").update();
         jdbc.sql("delete from tenants").update();
+        runWorkflowGateway.reset();
     }
 
     @Test
@@ -66,6 +80,15 @@ class ControlPlaneApiTest {
                 .andReturn();
 
         String runId = objectMapper.readTree(created.getResponse().getContentAsString()).get("id").asText();
+
+        assertThat(runWorkflowGateway.startedRuns())
+                .singleElement()
+                .satisfies(run -> {
+                    assertThat(run.tenantId()).isEqualTo("tenant_a");
+                    assertThat(run.runId()).isEqualTo(runId);
+                    assertThat(run.agentId()).isEqualTo("support-ticket");
+                    assertThat(run.input()).isEqualTo("Create a support ticket for login failure");
+                });
 
         mvc.perform(get("/api/runs").header("X-Agentctl-Tenant", "tenant_a"))
                 .andExpect(status().isOk())
@@ -131,6 +154,16 @@ class ControlPlaneApiTest {
                 .andExpect(jsonPath("$.status").value("APPROVED"))
                 .andExpect(jsonPath("$.decidedBy").value("user_local"));
 
+        assertThat(runWorkflowGateway.approvalSignals())
+                .singleElement()
+                .satisfies(signal -> {
+                    assertThat(signal.runId()).isEqualTo(runId);
+                    assertThat(signal.approvalId()).isEqualTo(approvalId);
+                    assertThat(signal.decision()).isEqualTo("APPROVED");
+                    assertThat(signal.actorId()).isEqualTo("user_local");
+                    assertThat(signal.reason()).isEqualTo("Looks safe");
+                });
+
         mvc.perform(post("/api/approvals/{approvalId}/approve", approvalId)
                         .header("X-Agentctl-Tenant", "tenant_a")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -166,6 +199,16 @@ class ControlPlaneApiTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("REJECTED"))
                 .andExpect(jsonPath("$.decisionReason").value("Needs more context"));
+
+        assertThat(runWorkflowGateway.approvalSignals())
+                .singleElement()
+                .satisfies(signal -> {
+                    assertThat(signal.runId()).isEqualTo(runId);
+                    assertThat(signal.approvalId()).isEqualTo(approvalId);
+                    assertThat(signal.decision()).isEqualTo("REJECTED");
+                    assertThat(signal.actorId()).isEqualTo("user_local");
+                    assertThat(signal.reason()).isEqualTo("Needs more context");
+                });
 
         mvc.perform(get("/api/approvals/pending").header("X-Agentctl-Tenant", "tenant_a"))
                 .andExpect(status().isOk())
@@ -222,5 +265,42 @@ class ControlPlaneApiTest {
                 .param("question", "Approve tool call?")
                 .param("created_at", Timestamp.from(now))
                 .update();
+    }
+
+    @TestConfiguration
+    static class WorkflowGatewayTestConfiguration {
+        @Bean
+        @Primary
+        RecordingRunWorkflowGateway recordingRunWorkflowGateway() {
+            return new RecordingRunWorkflowGateway();
+        }
+    }
+
+    static class RecordingRunWorkflowGateway implements RunWorkflowGateway {
+        private final List<RunWorkflowInput> startedRuns = new ArrayList<>();
+        private final List<ApprovalSignal> approvalSignals = new ArrayList<>();
+
+        @Override
+        public void startRun(RunWorkflowInput input) {
+            startedRuns.add(input);
+        }
+
+        @Override
+        public void signalApproval(String runId, ApprovalSignal signal) {
+            approvalSignals.add(signal);
+        }
+
+        List<RunWorkflowInput> startedRuns() {
+            return startedRuns;
+        }
+
+        List<ApprovalSignal> approvalSignals() {
+            return approvalSignals;
+        }
+
+        void reset() {
+            startedRuns.clear();
+            approvalSignals.clear();
+        }
     }
 }
