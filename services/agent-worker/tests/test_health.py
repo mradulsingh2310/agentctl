@@ -26,6 +26,16 @@ class HealthTest(unittest.TestCase):
 
         self.assertIn('"service": "agentctl-agent-worker"', output.getvalue())
 
+    def test_default_command_starts_http_server(self) -> None:
+        with patch("agentctl_agent_worker.main.uvicorn.run") as run_server:
+            main([])
+
+        run_server.assert_called_once_with(
+            "agentctl_agent_worker.app:app",
+            host="0.0.0.0",
+            port=8090,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

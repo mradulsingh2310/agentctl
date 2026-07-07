@@ -1,0 +1,29 @@
+{
+  "protocolVersion": "2026-07-07",
+  "stepId": "step_001",
+  "status": "WAITING_FOR_APPROVAL",
+  "summary": "Drafted a high support ticket: Checkout fails with HTTP 500.",
+  "output": {
+    "ticket": {
+      "title": "Checkout fails with HTTP 500",
+      "body": "User reported checkout failing with HTTP 500.",
+      "severity": "high",
+      "labels": [
+        "bug",
+        "checkout"
+      ]
+    }
+  },
+  "approvalRequest": {
+    "toolName": "support_ticket.approve_draft",
+    "question": "Approve this ticket draft before any ticket backend mutation?"
+  },
+  "toolCalls": [],
+  "modelUsage": {
+    "provider": "stub",
+    "model": "stub",
+    "inputTokens": 0,
+    "outputTokens": 0
+  },
+  "error": null
+}

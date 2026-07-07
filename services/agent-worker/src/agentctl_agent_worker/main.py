@@ -1,6 +1,7 @@
 import argparse
 import json
-import time
+
+import uvicorn
 
 from agentctl_agent_worker.health import health
 
@@ -14,5 +15,8 @@ def main(argv: list[str] | None = None) -> None:
         print(json.dumps(health(), sort_keys=True))
         return
 
-    while True:
-        time.sleep(60)
+    uvicorn.run(
+        "agentctl_agent_worker.app:app",
+        host="0.0.0.0",
+        port=8090,
+    )

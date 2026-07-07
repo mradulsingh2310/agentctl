@@ -3,7 +3,11 @@ name = "agentctl-agent-worker"
 version = "0.1.0"
 description = "agentctl Python LangGraph agent worker shell"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "fastapi[standard]>=0.128.0",
+    "langchain>=1.0.0",
+    "langgraph>=1.0.8",
+]
 
 [project.scripts]
 agentctl-agent-worker = "agentctl_agent_worker.main:main"

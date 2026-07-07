@@ -1,0 +1,19 @@
+{
+  "protocolVersion": "2026-07-07",
+  "tenantId": "tenant_a",
+  "runId": "run_123",
+  "agentId": "support-ticket",
+  "stepId": "step_001",
+  "stepType": "draft_ticket",
+  "input": "Create a support ticket for checkout failing with HTTP 500",
+  "modelProfile": {
+    "provider": "stub",
+    "model": "stub"
+  },
+  "toolContext": {
+    "backend": "none"
+  },
+  "traceContext": {
+    "correlationId": "corr_123"
+  }
+}
