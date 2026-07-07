@@ -52,20 +52,29 @@ and trace correlation.
 
 ### 5.1 Local Docker Stack
 
-`docker compose up` must start:
+`docker compose up` must start the core local platform:
 
 - `agentctl-api`: Java/Spring control plane.
 - `agentctl-worker`: Java Temporal worker hosting workflows and platform activities.
-- `agentctl-agent-worker`: Python worker hosting LangGraph agents and tool adapters.
 - `agentctl-web`: Next.js operational dashboard.
 - `temporal`: Temporal server for local durable execution.
 - `postgres`: control-plane database and Temporal persistence where appropriate.
 - `minio`: S3-compatible artifact storage.
-- `ollama`: local model service, configured for Gemma 4 after exact tag verification.
-- `otel-collector`: telemetry ingestion.
-- `prometheus`: metrics storage.
-- `tempo` or `jaeger`: trace storage.
-- `grafana`: dashboards.
+
+Optional Compose profiles must start heavier local services:
+
+- `agents` profile:
+  - `agentctl-agent-worker`: Python worker hosting LangGraph agents and tool adapters.
+  - `ollama`: local model service, configured for Gemma 4 after exact tag verification.
+- `observability` profile:
+  - `otel-collector`: telemetry ingestion.
+  - `prometheus`: metrics storage.
+  - `tempo` or `jaeger`: trace storage.
+  - `grafana`: dashboards.
+
+The default path must avoid downloading optional model and observability images.
+
+The full local platform can still be launched with both optional profiles enabled.
 
 ### 5.2 Execution Truth
 
