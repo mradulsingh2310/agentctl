@@ -72,3 +72,25 @@ if (!serviceBlockFor("temporal").includes("DB: postgres12")) {
   console.error("Temporal compose contract must use DB: postgres12");
   process.exit(1);
 }
+
+const profiledServices = new Map([
+  ["agentctl-agent-worker", "agents"],
+  ["ollama", "agents"],
+  ["otel-collector", "observability"],
+  ["prometheus", "observability"],
+  ["tempo", "observability"],
+  ["grafana", "observability"],
+]);
+
+const missingProfiles = Array.from(profiledServices.entries()).filter(
+  ([service, profile]) => !serviceBlockFor(service).includes(`      - ${profile}`),
+);
+
+if (missingProfiles.length > 0) {
+  console.error(
+    `Compose contract missing service profiles: ${missingProfiles
+      .map(([service, profile]) => `${service}:${profile}`)
+      .join(", ")}`,
+  );
+  process.exit(1);
+}

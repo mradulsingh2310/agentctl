@@ -14,7 +14,6 @@ services:
       - postgres
       - temporal
       - minio
-      - otel-collector
     ports:
       - "8080:8080"
     healthcheck:
@@ -40,7 +39,6 @@ services:
       - postgres
       - temporal
       - minio
-      - otel-collector
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8081/api/health"]
       interval: 10s
@@ -49,6 +47,8 @@ services:
       start_period: 30s
 
   agentctl-agent-worker:
+    profiles:
+      - agents
     build:
       context: ./services/agent-worker
     environment:
@@ -142,6 +142,8 @@ services:
       retries: 12
 
   ollama:
+    profiles:
+      - agents
     image: ollama/ollama:latest
     ports:
       - "11434:11434"
@@ -149,6 +151,8 @@ services:
       - ollama-data:/root/.ollama
 
   otel-collector:
+    profiles:
+      - observability
     image: otel/opentelemetry-collector-contrib:latest
     command: ["--config=/etc/otelcol/config.yaml"]
     volumes:
@@ -165,6 +169,8 @@ services:
       retries: 12
 
   prometheus:
+    profiles:
+      - observability
     image: prom/prometheus:latest
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -176,6 +182,8 @@ services:
       - "9090:9090"
 
   tempo:
+    profiles:
+      - observability
     image: grafana/tempo:latest
     command: ["-config.file=/etc/tempo.yaml"]
     volumes:
@@ -184,6 +192,8 @@ services:
       - "3200:3200"
 
   grafana:
+    profiles:
+      - observability
     image: grafana/grafana:latest
     environment:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
