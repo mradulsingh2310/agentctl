@@ -21,7 +21,9 @@ This repository contains the M1-M3 platform foundation:
 ## PRDs
 
 - [Platform PRD](docs/prd/agentctl-platform.md)
-- [M1/M2 Foundation PRD](docs/prd/m1-m2-foundation.md)
+- [M1/M2 Foundation PRD - superseded](docs/prd/m1-m2-foundation.md)
+- [M4 Agent Step Protocol PRD](docs/prd/m4-agent-step-protocol.md)
+- [M5 Support Ticket V1 PRD](docs/prd/m5-support-ticket-v1.md)
 - [Support Ticket Agent PRD](docs/prd/agents/support-ticket-agent.md)
 - [Incident Agent PRD](docs/prd/agents/incident-agent.md)
 - [GitHub Ops Ticket-to-PR Agent PRD](docs/prd/agents/github-ops-ticket-to-pr-agent.md)

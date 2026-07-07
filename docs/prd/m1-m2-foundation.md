@@ -1,9 +1,25 @@
 # PRD: M1 Compose Hardening And M2 Control-Plane Foundation
 
-Status: Draft v0.1  
+Status: Superseded v0.1
 Owner: Mradul Singh  
 Date: 2026-07-07  
 Repo: `github.com/mradulsingh2310/agentctl`
+
+## Supersession Note
+
+This PRD is retained as historical context for the M1/M2 foundation work. It is
+superseded by `docs/prd/agentctl-platform.md` for current Compose behavior and
+by later milestone PRDs for implementation planning.
+
+The main superseded assumption is that `docker compose up` starts every optional
+service by default. Current product direction keeps the default local path light:
+API, Java worker, web, Temporal, Postgres, and MinIO start by default; Python
+agent worker/Ollama use the `agents` profile; OTel/Prometheus/Tempo/Grafana use
+the `observability` profile.
+
+Do not use this document as current acceptance criteria for default Compose
+profiles. Use it only to understand why the initial schema, run APIs, approval
+APIs, audit APIs, and healthchecked service shells exist.
 
 ## 1. Scope
 
