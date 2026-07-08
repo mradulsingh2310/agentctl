@@ -4,6 +4,8 @@ Status: Draft v0.1
 Owner: Mradul Singh  
 Date: 2026-07-07  
 Parent: `docs/prd/agents/support-ticket-agent.md`  
+Related PRD: `docs/prd/m5-agent-tool-execution-boundary.md`
+Related ADR: `docs/adr/0001-agent-tool-execution-boundary.md`
 Repo: `github.com/mradulsingh2310/agentctl`
 
 ## 1. Product Summary

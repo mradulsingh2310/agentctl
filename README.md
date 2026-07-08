@@ -24,9 +24,14 @@ This repository contains the M1-M4 platform foundation:
 - [M1/M2 Foundation PRD - superseded](docs/prd/m1-m2-foundation.md)
 - [M4 Agent Step Protocol PRD](docs/prd/m4-agent-step-protocol.md)
 - [M5 Support Ticket V1 PRD](docs/prd/m5-support-ticket-v1.md)
+- [M5 Agent Tool Execution Boundary PRD](docs/prd/m5-agent-tool-execution-boundary.md)
 - [Support Ticket Agent PRD](docs/prd/agents/support-ticket-agent.md)
 - [Incident Agent PRD](docs/prd/agents/incident-agent.md)
 - [GitHub Ops Ticket-to-PR Agent PRD](docs/prd/agents/github-ops-ticket-to-pr-agent.md)
+
+## ADRs
+
+- [ADR-0001: Agent Tool Execution Boundary](docs/adr/0001-agent-tool-execution-boundary.md)
 
 ## Local Demo
 
