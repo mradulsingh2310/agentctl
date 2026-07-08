@@ -63,6 +63,7 @@ public class JdbcRunProjectionActivities implements RunProjectionActivities {
         for (AgentStepToolCall toolCall : toolCalls(response)) {
             insertToolCall(request, toolCall, now);
         }
+        ticketOutput(response).ifPresent(ticket -> insertTicketProjection(request, ticket, now));
         insertAuditEvent(request.tenantId(), request.runId(), "AGENT_STEP_RECORDED", "Agent step " + response.status(), now);
     }
 
@@ -159,6 +160,37 @@ public class JdbcRunProjectionActivities implements RunProjectionActivities {
                 .param("external_url", toolCall.externalUrl())
                 .param("fga_decision_id", toolCall.fgaDecisionId())
                 .param("metadata_json", writeJson(toolCall.metadata() == null ? Map.of() : toolCall.metadata()))
+                .param("created_at", Timestamp.from(createdAt))
+                .param("updated_at", Timestamp.from(createdAt))
+                .update();
+    }
+
+    private void insertTicketProjection(AgentStepRequest request, Map<String, Object> ticket, Instant createdAt) {
+        String ticketId = "ticket_" + request.runId();
+        if (ticketProjectionExists(request.tenantId(), ticketId)) {
+            return;
+        }
+        jdbc.sql("""
+                        insert into tickets
+                        (tenant_id, id, run_id, backend, external_ticket_id, external_url, title, body, status,
+                         severity, labels_json, assignee, idempotency_marker, created_at, updated_at)
+                        values (:tenant_id, :id, :run_id, :backend, :external_ticket_id, :external_url, :title,
+                                :body, :status, :severity, :labels_json, :assignee, :idempotency_marker,
+                                :created_at, :updated_at)
+                        """)
+                .param("tenant_id", request.tenantId())
+                .param("id", ticketId)
+                .param("run_id", request.runId())
+                .param("backend", stringValue(ticket.get("backend")))
+                .param("external_ticket_id", stringValue(ticket.get("externalTicketId")))
+                .param("external_url", stringValue(ticket.get("externalUrl")))
+                .param("title", stringValue(ticket.get("title")))
+                .param("body", stringValue(ticket.get("body")))
+                .param("status", stringValue(ticket.get("status")))
+                .param("severity", stringValue(ticket.get("severity")))
+                .param("labels_json", writeJson(ticket.get("labels") == null ? List.of() : ticket.get("labels")))
+                .param("assignee", stringValue(ticket.get("assignee")))
+                .param("idempotency_marker", stringValue(ticket.get("idempotencyMarker")))
                 .param("created_at", Timestamp.from(createdAt))
                 .param("updated_at", Timestamp.from(createdAt))
                 .update();
@@ -284,11 +316,39 @@ public class JdbcRunProjectionActivities implements RunProjectionActivities {
                 .single();
     }
 
+    private boolean ticketProjectionExists(String tenantId, String ticketId) {
+        return jdbc.sql("""
+                        select count(*)
+                        from tickets
+                        where tenant_id = :tenant_id and id = :id
+                        """)
+                .param("tenant_id", tenantId)
+                .param("id", ticketId)
+                .query((rs, rowNum) -> rs.getInt(1) > 0)
+                .single();
+    }
+
     private static List<AgentStepToolCall> toolCalls(AgentStepResponse response) {
         if (response.toolCalls() == null) {
             return List.of();
         }
         return response.toolCalls();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Optional<Map<String, Object>> ticketOutput(AgentStepResponse response) {
+        if (!"COMPLETED".equals(response.status()) || response.output() == null) {
+            return Optional.empty();
+        }
+        Object ticket = response.output().get("ticket");
+        if (ticket instanceof Map<?, ?> ticketMap) {
+            return Optional.of((Map<String, Object>) ticketMap);
+        }
+        return Optional.empty();
+    }
+
+    private static String stringValue(Object value) {
+        return value == null ? null : String.valueOf(value);
     }
 
     private String writeJson(Object value) {

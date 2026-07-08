@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +30,7 @@ class JdbcRunProjectionActivitiesTest {
 
     @BeforeEach
     void cleanDatabase() {
+        jdbc.sql("delete from tickets").update();
         jdbc.sql("delete from tool_calls").update();
         jdbc.sql("delete from model_calls").update();
         jdbc.sql("delete from agent_steps").update();
@@ -61,6 +63,33 @@ class JdbcRunProjectionActivitiesTest {
 
         assertThat(count("agent_steps")).isEqualTo(1);
         assertThat(count("model_calls")).isEqualTo(1);
+        assertThat(count("tool_calls")).isEqualTo(1);
+        assertThat(count("audit_events")).isEqualTo(1);
+    }
+
+    @Test
+    void recordsCompletedExecuteStepTicketToolAndAuditProjection() {
+        activities.recordAgentStep(executeStepRequest(), executeCompletedResponse());
+
+        assertThat(count("agent_steps")).isEqualTo(1);
+        assertThat(count("tickets")).isEqualTo(1);
+        assertThat(count("tool_calls")).isEqualTo(1);
+        assertThat(count("audit_events")).isEqualTo(1);
+        assertThat(singleString("select backend from tickets where run_id = 'run_projection'"))
+                .isEqualTo("fake");
+        assertThat(singleString("select external_ticket_id from tickets where run_id = 'run_projection'"))
+                .isEqualTo("fake_run_projection");
+        assertThat(singleString("select operation_id from tool_calls where run_id = 'run_projection'"))
+                .isEqualTo("run_projection:approval_run_projection:fake_ticket.create");
+    }
+
+    @Test
+    void recordingSameExecuteStepTwiceDoesNotDuplicateTicketProjection() {
+        activities.recordAgentStep(executeStepRequest(), executeCompletedResponse());
+        activities.recordAgentStep(executeStepRequest(), executeCompletedResponse());
+
+        assertThat(count("agent_steps")).isEqualTo(1);
+        assertThat(count("tickets")).isEqualTo(1);
         assertThat(count("tool_calls")).isEqualTo(1);
         assertThat(count("audit_events")).isEqualTo(1);
     }
@@ -105,6 +134,20 @@ class JdbcRunProjectionActivitiesTest {
                 Map.of());
     }
 
+    private AgentStepRequest executeStepRequest() {
+        return new AgentStepRequest(
+                "2026-07-07",
+                "tenant_a",
+                "run_projection",
+                "support-ticket",
+                "step_execute_run_projection",
+                "execute_ticket_workflow",
+                "Create a support ticket",
+                Map.of("provider", "stub", "model", "stub"),
+                Map.of("backend", "fake"),
+                Map.of());
+    }
+
     private AgentStepResponse waitingForApprovalResponse() {
         return new AgentStepResponse(
                 "2026-07-07",
@@ -125,6 +168,41 @@ class JdbcRunProjectionActivitiesTest {
                         Map.of("ticketTitle", "Login failure"))),
                 new AgentStepModelUsage("stub", "stub", 0, 0),
                 null);
+    }
+
+    private AgentStepResponse executeCompletedResponse() {
+        return new AgentStepResponse(
+                "2026-07-07",
+                "step_execute_run_projection",
+                "COMPLETED",
+                "Created fake ticket fake_run_projection.",
+                Map.of("ticket", ticketOutput()),
+                null,
+                List.of(new AgentStepToolCall(
+                        "fake_ticket.create",
+                        "run_projection:approval_run_projection:fake_ticket.create",
+                        "COMPLETED",
+                        "fake",
+                        null,
+                        "local-dev",
+                        Map.of("externalTicketId", "fake_run_projection"))),
+                new AgentStepModelUsage("stub", "stub", 0, 0),
+                null);
+    }
+
+    private Map<String, Object> ticketOutput() {
+        Map<String, Object> ticket = new LinkedHashMap<>();
+        ticket.put("backend", "fake");
+        ticket.put("externalTicketId", "fake_run_projection");
+        ticket.put("externalUrl", null);
+        ticket.put("title", "Checkout fails with HTTP 500");
+        ticket.put("body", "User reported checkout failing with HTTP 500.");
+        ticket.put("status", "OPEN");
+        ticket.put("severity", "high");
+        ticket.put("labels", List.of("bug", "checkout"));
+        ticket.put("assignee", null);
+        ticket.put("idempotencyMarker", "agentctl:run_projection:approval_run_projection:fake_ticket.create");
+        return ticket;
     }
 
     private void insertRun(String tenantId, String runId) {

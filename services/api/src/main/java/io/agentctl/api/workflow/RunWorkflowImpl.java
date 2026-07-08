@@ -1,6 +1,7 @@
 package io.agentctl.api.workflow;
 
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -99,6 +100,32 @@ public class RunWorkflowImpl implements RunWorkflow {
         Workflow.await(() -> approvalSignal != null);
 
         if ("APPROVED".equals(normalizedDecision())) {
+            AgentStepRequest executeRequest = executeStepRequest(input, stepResponse);
+            AgentStepResponse executeResponse;
+            try {
+                executeResponse = agentSteps.callAgentStep(executeRequest);
+            } catch (ActivityFailure failure) {
+                activities.failRun(new RunFailure(
+                        input.tenantId(),
+                        input.runId(),
+                        "AGENT_STEP_ACTIVITY_FAILED",
+                        failure.getMessage()));
+                status = "FAILED";
+                return new RunWorkflowResult(input.runId(), status);
+            }
+            activities.recordAgentStep(executeRequest, executeResponse);
+
+            if (!"COMPLETED".equals(executeResponse.status())) {
+                AgentStepError error = executeResponse.error();
+                activities.failRun(new RunFailure(
+                        input.tenantId(),
+                        input.runId(),
+                        error == null ? "AGENT_STEP_FAILED" : error.code(),
+                        error == null ? executeResponse.summary() : error.message()));
+                status = "FAILED";
+                return new RunWorkflowResult(input.runId(), status);
+            }
+
             activities.completeRun(new RunCompletion(
                     input.tenantId(),
                     input.runId(),
@@ -137,5 +164,43 @@ public class RunWorkflowImpl implements RunWorkflow {
 
     private String normalizedDecision() {
         return approvalSignal.decision().toUpperCase(Locale.ROOT);
+    }
+
+    private AgentStepRequest executeStepRequest(RunWorkflowInput input, AgentStepResponse draftResponse) {
+        Map<String, Object> approval = new LinkedHashMap<>();
+        approval.put("approvalId", approvalId);
+        approval.put("actorId", approvalSignal.actorId());
+        approval.put("reason", approvalSignal.reason());
+
+        Map<String, Object> toolContext = new LinkedHashMap<>();
+        toolContext.put("backend", "fake");
+        toolContext.put("approval", approval);
+        toolContext.put("draft", draftTicket(draftResponse));
+        toolContext.put("operationBaseId", input.runId() + ":" + approvalId);
+
+        return new AgentStepRequest(
+                "2026-07-07",
+                input.tenantId(),
+                input.runId(),
+                input.agentId(),
+                "step_execute_" + input.runId(),
+                "execute_ticket_workflow",
+                input.input(),
+                Map.of("provider", "stub", "model", "stub"),
+                toolContext,
+                Map.of());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> draftTicket(AgentStepResponse draftResponse) {
+        Object ticket = draftResponse.output() == null ? null : draftResponse.output().get("ticket");
+        if (!(ticket instanceof Map<?, ?> ticketMap)) {
+            return Map.of();
+        }
+        Map<String, Object> draft = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : ticketMap.entrySet()) {
+            draft.put(String.valueOf(entry.getKey()), entry.getValue());
+        }
+        return draft;
     }
 }
