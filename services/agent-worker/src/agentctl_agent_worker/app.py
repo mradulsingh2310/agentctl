@@ -2,16 +2,15 @@ from fastapi import FastAPI, Header, HTTPException
 
 from agentctl_agent_worker.health import health
 from agentctl_agent_worker.protocol import (
-    AgentStepApprovalRequest,
     AgentStepError,
-    AgentStepModelUsage,
     AgentStepRequest,
     AgentStepResponse,
 )
-from agentctl_agent_worker.support_ticket import draft_support_ticket
+from agentctl_agent_worker.support_ticket import default_fake_ticket_tool, handle_support_ticket_step
 
 
 app = FastAPI(title="agentctl agent worker")
+app.state.fake_ticket_tool = None
 
 
 @app.get("/health")
@@ -40,33 +39,10 @@ def run_agent_step(
                 retryable=False,
             ),
         )
-    if request.stepType != "draft_ticket":
-        return AgentStepResponse(
-            stepId=request.stepId,
-            status="FAILED",
-            summary="Unsupported step type.",
-            error=AgentStepError(
-                code="UNSUPPORTED_STEP_TYPE",
-                message=f"Unsupported stepType={request.stepType}",
-                retryable=False,
-            ),
-        )
+    return handle_support_ticket_step(request, fake_ticket_tool=fake_ticket_tool())
 
-    draft = draft_support_ticket(request.input)
-    return AgentStepResponse(
-        stepId=request.stepId,
-        status="WAITING_FOR_APPROVAL",
-        summary=draft["summary"],
-        output={"ticket": draft["ticket"]},
-        approvalRequest=AgentStepApprovalRequest(
-            toolName="support_ticket.approve_draft",
-            question="Approve this ticket draft before any ticket backend mutation?",
-        ),
-        toolCalls=[],
-        modelUsage=AgentStepModelUsage(
-            provider="stub",
-            model="stub",
-            inputTokens=0,
-            outputTokens=0,
-        ),
-    )
+
+def fake_ticket_tool():
+    if app.state.fake_ticket_tool is None:
+        app.state.fake_ticket_tool = default_fake_ticket_tool()
+    return app.state.fake_ticket_tool
