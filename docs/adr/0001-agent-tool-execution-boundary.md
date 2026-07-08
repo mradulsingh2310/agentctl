@@ -1,6 +1,6 @@
 # ADR-0001: Agent Tool Execution Boundary
 
-Status: Proposed
+Status: Accepted
 Date: 2026-07-08
 Owner: Mradul Singh
 Related PRD: `docs/prd/m5-agent-tool-execution-boundary.md`

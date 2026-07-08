@@ -1,0 +1,44 @@
+{
+  "protocolVersion": "2026-07-07",
+  "stepId": "step_execute_run_123",
+  "status": "COMPLETED",
+  "summary": "Created fake ticket fake_run_123.",
+  "output": {
+    "ticket": {
+      "backend": "fake",
+      "externalTicketId": "fake_run_123",
+      "externalUrl": null,
+      "title": "Checkout fails with HTTP 500",
+      "body": "User reported checkout failing with HTTP 500.",
+      "status": "OPEN",
+      "severity": "high",
+      "labels": [
+        "bug",
+        "checkout"
+      ],
+      "assignee": null,
+      "idempotencyMarker": "agentctl:run_123:approval_run_123:fake_ticket.create"
+    }
+  },
+  "approvalRequest": null,
+  "toolCalls": [
+    {
+      "toolName": "fake_ticket.create",
+      "operationId": "run_123:approval_run_123:fake_ticket.create",
+      "status": "COMPLETED",
+      "backend": "fake",
+      "externalUrl": null,
+      "fgaDecisionId": "local-dev",
+      "metadata": {
+        "externalTicketId": "fake_run_123"
+      }
+    }
+  ],
+  "modelUsage": {
+    "provider": "stub",
+    "model": "stub",
+    "inputTokens": 0,
+    "outputTokens": 0
+  },
+  "error": null
+}

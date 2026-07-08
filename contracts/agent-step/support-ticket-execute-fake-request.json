@@ -1,0 +1,33 @@
+{
+  "protocolVersion": "2026-07-07",
+  "tenantId": "tenant_a",
+  "runId": "run_123",
+  "agentId": "support-ticket",
+  "stepId": "step_execute_run_123",
+  "stepType": "execute_ticket_workflow",
+  "input": "Create a support ticket for checkout failing with HTTP 500",
+  "modelProfile": {
+    "provider": "stub",
+    "model": "stub"
+  },
+  "toolContext": {
+    "backend": "fake",
+    "approval": {
+      "approvalId": "approval_run_123",
+      "actorId": "user_local",
+      "reason": "Looks safe"
+    },
+    "draft": {
+      "title": "Checkout fails with HTTP 500",
+      "body": "User reported checkout failing with HTTP 500.",
+      "severity": "high",
+      "labels": [
+        "bug",
+        "checkout"
+      ],
+      "assignee": null
+    },
+    "operationBaseId": "run_123:approval_run_123"
+  },
+  "traceContext": {}
+}
